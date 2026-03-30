@@ -1,295 +1,164 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>서울 부동산 딥다이브 — 입시와 집값의 연결고리</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Playfair+Display:ital,wght@0,700;1,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<style>
-:root{--ink:#0a0a0f;--paper:#f4f1eb;--cream:#eae5db;--accent:#c8432b;--accent-light:#e8654f;--accent-muted:rgba(200,67,43,.12);--blue:#2563eb;--blue-muted:rgba(37,99,235,.10);--teal:#0d9488;--gold:#b8860b;--slate:#64748b;--border:#d1cbbf;--card:#fffdf8;--font-display:'Playfair Display',Georgia,serif;--font-body:'Noto Sans KR',sans-serif;--font-mono:'JetBrains Mono',monospace}
-*{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{font-family:var(--font-body);background:var(--paper);color:var(--ink);font-weight:400;line-height:1.7;-webkit-font-smoothing:antialiased}
-nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,.88);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06);padding:.75rem 2rem;display:flex;align-items:center;justify-content:space-between;transform:translateY(-100%);transition:transform .3s}
-nav.show{transform:translateY(0)}
-nav .brand{font-family:var(--font-display);font-size:1rem;color:#fff;font-weight:700}
-nav .nav-links{display:flex;gap:1.5rem}
-nav .nav-links a{color:rgba(255,255,255,.5);text-decoration:none;font-size:.78rem;letter-spacing:.03em;transition:color .2s}
-nav .nav-links a:hover{color:#fff}
-.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:4rem 2rem;overflow:hidden;background:linear-gradient(170deg,#0a0a0f 0%,#1a1520 40%,#2a1828 70%,#0a0a0f 100%);color:#fff}
-.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 600px 400px at 20% 50%,rgba(200,67,43,.15),transparent),radial-gradient(ellipse 500px 500px at 80% 30%,rgba(37,99,235,.08),transparent);pointer-events:none}
-.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
-.hero-content{position:relative;max-width:1100px;margin:0 auto;z-index:1}
-.hero-eyebrow{font-family:var(--font-mono);font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent-light);margin-bottom:1.5rem;opacity:0;animation:fadeUp .8s ease forwards}
-.hero h1{font-family:var(--font-display);font-size:clamp(2.8rem,6vw,5.5rem);line-height:1.08;font-weight:700;letter-spacing:-.02em;margin-bottom:1.5rem;opacity:0;animation:fadeUp .8s ease .15s forwards}
-.hero h1 em{color:var(--accent-light);font-style:italic}
-.hero-sub{font-size:1.15rem;line-height:1.8;color:rgba(255,255,255,.6);max-width:650px;font-weight:300;opacity:0;animation:fadeUp .8s ease .3s forwards}
-.hero-stats{display:flex;gap:3rem;margin-top:3rem;opacity:0;animation:fadeUp .8s ease .45s forwards}
-.hero-stat span{display:block;font-family:var(--font-mono);font-size:2rem;font-weight:600;color:var(--accent-light)}
-.hero-stat small{font-size:.8rem;color:rgba(255,255,255,.45);letter-spacing:.04em}
-.scroll-hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.25);animation:pulse 2s ease infinite}
-@keyframes pulse{0%,100%{opacity:.25}50%{opacity:.6}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-.container{max-width:1200px;margin:0 auto;padding:0 2rem}
-section{padding:5rem 0;opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease}
-section.visible{opacity:1;transform:translateY(0)}
-.section-rule{width:60px;height:3px;background:var(--accent);margin-bottom:1rem}
-.section-label{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--slate);margin-bottom:.5rem}
-h2{font-family:var(--font-display);font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;line-height:1.2;margin-bottom:.75rem}
-.section-desc{color:var(--slate);max-width:600px;margin-bottom:2.5rem;font-size:.95rem}
-.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;margin-bottom:3rem}
-.metric-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.5rem;text-align:center;transition:transform .25s,box-shadow .25s}
-.metric-card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,.06)}
-.metric-value{font-family:var(--font-mono);font-size:2rem;font-weight:600;color:var(--accent)}
-.metric-value.blue{color:var(--blue)}
-.metric-value.teal{color:var(--teal)}
-.metric-label{font-size:.8rem;color:var(--slate);margin-top:.25rem}
-.metric-sub{font-size:.7rem;color:var(--slate);margin-top:.3rem;opacity:.7}
-.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem}
-.chart-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem}
-.chart-box h3{font-size:.95rem;font-weight:700;margin-bottom:1rem}
-.chart-full{grid-column:1/-1}
-.insight{background:var(--accent-muted);border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:1.25rem 1.5rem;margin:1.5rem 0;font-size:.9rem;line-height:1.8}
-.insight strong{color:var(--accent)}
-.insight-blue{background:var(--blue-muted);border-left-color:var(--blue)}
-.insight-blue strong{color:var(--blue)}
-.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);background:var(--card)}
-table{width:100%;border-collapse:collapse;font-size:.82rem}
-thead th{background:var(--ink);color:#fff;padding:.7rem .8rem;text-align:left;font-weight:500;font-size:.72rem;letter-spacing:.04em;position:sticky;top:0;white-space:nowrap}
-tbody td{padding:.6rem .8rem;border-bottom:1px solid var(--border);white-space:nowrap}
-tbody tr:hover{background:rgba(200,67,43,.04)}
-.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:.65rem;font-weight:700;color:#fff}
-.rank-1{background:var(--accent)}.rank-2{background:var(--blue)}.rank-3{background:var(--teal)}.rank-n{background:var(--slate)}
-.bar-inline{height:6px;border-radius:3px;background:var(--accent);opacity:.3;display:block;margin-top:2px}
-td .mono{font-family:var(--font-mono);font-size:.8rem}
-.cluster-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem}
-.cluster-card{border-radius:12px;padding:1.5rem;border:1px solid var(--border)}
-.cluster-card h4{font-size:.95rem;font-weight:700;margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem}
-.cluster-card ul{list-style:none;padding:0;font-size:.85rem;color:var(--slate);line-height:2}
-.cluster-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
-footer{background:var(--ink);color:rgba(255,255,255,.4);padding:3rem 2rem;text-align:center;font-size:.75rem;line-height:1.8}
-@media(max-width:768px){.chart-row,.cluster-grid{grid-template-columns:1fr}.hero-stats{flex-wrap:wrap;gap:1.5rem}.hero{padding:3rem 1.5rem}.container{padding:0 1.25rem}section{padding:3rem 0}nav .nav-links{display:none}}
-</style>
-</head>
-<body>
-<nav id="nav"><div class="brand">서울 부동산 딥다이브</div><div class="nav-links"><a href="#correlation">상관분석</a><a href="#academy">학원 인프라</a><a href="#cluster">클러스터</a><a href="#composite">종합지수</a><a href="#data">데이터</a></div></nav>
-
-<header class="hero">
-<div class="hero-grid"></div>
-<div class="hero-content">
-<p class="hero-eyebrow">Seoul Real Estate Deep Dive &mdash; 2024</p>
-<h1>입시가 곧 <em>집값</em>이다</h1>
-<p class="hero-sub">서울 25개 자치구의 인구 구조를 영유아&middot;초등&middot;중고등으로 해부하고, 사교육 인프라가 부동산 가치에 미치는 영향을 정량적으로 추적합니다. 클러스터 분석과 복합지수로 시장의 숨겨진 구조를 드러냅니다.</p>
-<div class="hero-stats">
-<div class="hero-stat"><span>25</span><small>서울시 자치구</small></div>
-<div class="hero-stat"><span>3</span><small>연령대 세분화</small></div>
-<div class="hero-stat"><span id="heroCorr">&mdash;</span><small>최고 상관계수</small></div>
-</div>
-</div>
-<div class="scroll-hint">&darr; Scroll to explore</div>
-</header>
-
-<main>
-<section id="correlation"><div class="container">
-<div class="section-rule"></div>
-<p class="section-label">Chapter 01</p>
-<h2>어떤 아이들이 집값을 올리는가?</h2>
-<p class="section-desc">학령인구를 영유아(0-6), 초등(7-12), 입시생(13-18)으로 쪼개어 집값 상관관계를 비교합니다.</p>
-<div class="metric-grid" id="corrMetrics"></div>
-<div class="chart-row">
-<div class="chart-box"><h3>연령대별 상관계수 비교</h3><canvas id="corrBar" height="280"></canvas></div>
-<div class="chart-box"><h3>입시생 비율 vs 평당 가격</h3><canvas id="scatterAdol" height="280"></canvas></div>
-</div>
-<div class="insight" id="corrInsight"></div>
-<div class="chart-row">
-<div class="chart-box"><h3>영유아 비율 vs 평당 가격</h3><canvas id="scatterInfant" height="260"></canvas></div>
-<div class="chart-box"><h3>초등 비율 vs 평당 가격</h3><canvas id="scatterElem" height="260"></canvas></div>
-</div>
-</div></section>
-
-<section id="academy"><div class="container">
-<div class="section-rule"></div>
-<p class="section-label">Chapter 02</p>
-<h2>학원이 많은 곳이 비싸다</h2>
-<p class="section-desc">사설학원 밀도와 부동산 가격의 관계를 추적합니다. 인구 대비 학원 수로 '진짜 교육 특구'를 가려냅니다.</p>
-<div class="chart-row">
-<div class="chart-box"><h3>학원 수 vs 평당 가격</h3><canvas id="scatterAcademy" height="300"></canvas></div>
-<div class="chart-box"><h3>입시생 1,000명당 학원 수 (Top 15)</h3><canvas id="densityBar" height="300"></canvas></div>
-</div>
-<div class="insight insight-blue" id="academyInsight"></div>
-</div></section>
-
-<section id="cluster"><div class="container">
-<div class="section-rule"></div>
-<p class="section-label">Chapter 03</p>
-<h2>서울 자치구의 4가지 유형</h2>
-<p class="section-desc">집값&middot;학원 수&middot;입시생 비율을 기준으로 자치구를 4개 유형으로 분류합니다.</p>
-<div class="chart-row">
-<div class="chart-box chart-full"><h3>클러스터 맵: 학원 수 &times; 평당 가격 (버블 = 입시생 비율)</h3><canvas id="clusterChart" height="380"></canvas></div>
-</div>
-<div class="cluster-grid" id="clusterCards"></div>
-</div></section>
-
-<section id="composite"><div class="container">
-<div class="section-rule"></div>
-<p class="section-label">Chapter 04</p>
-<h2>교육 프리미엄 종합지수</h2>
-<p class="section-desc">입시생 비율(40%) + 학원 밀도(35%) + 인구 규모(25%)를 결합한 복합 지수입니다.</p>
-<div class="chart-row">
-<div class="chart-box chart-full"><h3>교육 프리미엄 지수 vs 평당 가격</h3><canvas id="compositeChart" height="350"></canvas></div>
-</div>
-<div class="metric-grid" id="compositeMetrics"></div>
-<div class="insight" id="compositeInsight"></div>
-</div></section>
-
-<section id="data"><div class="container">
-<div class="section-rule"></div>
-<p class="section-label">Chapter 05</p>
-<h2>전체 데이터</h2>
-<p class="section-desc">25개 자치구 종합 데이터 (가격순 정렬)</p>
-<div class="table-wrap"><table id="dataTable"><thead></thead><tbody></tbody></table></div>
-</div></section>
-</main>
-
-<footer><div class="container">서울 부동산 딥다이브 &mdash; 입시와 집값의 연결고리 &nbsp;|&nbsp; 2024년 기준 추정 데이터<br>인구: 서울열린데이터광장 &nbsp;|&nbsp; 가격: 국토교통부 실거래가 기반 추정 &nbsp;|&nbsp; 학원: 서울시 교육청 학원정보</div></footer>
-
 <script>
-const RAW=[
-{region:'강남구',price:8150,academy:2578,pop:521806,infant_r:2.8,elem_r:3.5,adol_r:4.2},
-{region:'서초구',price:7720,academy:1187,pop:406586,infant_r:2.9,elem_r:3.6,adol_r:4.4},
-{region:'용산구',price:6250,academy:180,pop:229431,infant_r:2.3,elem_r:2.8,adol_r:3.1},
-{region:'송파구',price:5980,academy:1155,pop:667483,infant_r:2.7,elem_r:3.4,adol_r:4.0},
-{region:'성동구',price:5250,academy:320,pop:296854,infant_r:2.6,elem_r:3.3,adol_r:3.5},
-{region:'마포구',price:4700,academy:520,pop:374380,infant_r:2.4,elem_r:3.0,adol_r:3.3},
-{region:'광진구',price:4450,academy:390,pop:341889,infant_r:2.5,elem_r:3.1,adol_r:3.4},
-{region:'양천구',price:4400,academy:1050,pop:454243,infant_r:2.9,elem_r:3.7,adol_r:4.3},
-{region:'영등포구',price:4150,academy:430,pop:389250,infant_r:2.3,elem_r:2.9,adol_r:3.1},
-{region:'강동구',price:4100,academy:680,pop:467593,infant_r:2.8,elem_r:3.5,adol_r:3.8},
-{region:'동작구',price:4000,academy:450,pop:389759,infant_r:2.4,elem_r:3.1,adol_r:3.6},
-{region:'중구',price:3850,academy:150,pop:126603,infant_r:2.1,elem_r:2.6,adol_r:2.8},
-{region:'종로구',price:3700,academy:230,pop:148254,infant_r:2.0,elem_r:2.5,adol_r:2.7},
-{region:'서대문구',price:3500,academy:370,pop:312726,infant_r:2.3,elem_r:2.9,adol_r:3.2},
-{region:'동대문구',price:3350,academy:350,pop:345340,infant_r:2.4,elem_r:3.0,adol_r:3.1},
-{region:'성북구',price:3150,academy:550,pop:432267,infant_r:2.5,elem_r:3.1,adol_r:3.3},
-{region:'강서구',price:3100,academy:600,pop:569025,infant_r:2.6,elem_r:3.3,adol_r:3.5},
-{region:'관악구',price:3000,academy:380,pop:496243,infant_r:2.1,elem_r:2.6,adol_r:2.8},
-{region:'은평구',price:2950,academy:538,pop:477849,infant_r:2.4,elem_r:3.0,adol_r:3.2},
-{region:'구로구',price:2850,academy:340,pop:413516,infant_r:2.5,elem_r:3.1,adol_r:3.2},
-{region:'노원구',price:2800,academy:739,pop:516762,infant_r:2.6,elem_r:3.3,adol_r:3.6},
-{region:'중랑구',price:2650,academy:300,pop:391704,infant_r:2.4,elem_r:3.0,adol_r:3.1},
-{region:'강북구',price:2600,academy:220,pop:298957,infant_r:2.2,elem_r:2.7,adol_r:2.9},
-{region:'금천구',price:2550,academy:200,pop:234710,infant_r:2.3,elem_r:2.8,adol_r:3.0},
-{region:'도봉구',price:2450,academy:290,pop:319143,infant_r:2.4,elem_r:3.0,adol_r:3.2}
-];
+    // 1. 하드코딩된 원본 데이터 (CSV 로드 대체)
+    const RAW_DATA = [
+        { region: '강남구', price: 8150, academy: 2578, pop: 521806, infant_r: 2.8, elem_r: 3.5, adol_r: 4.2 },
+        { region: '서초구', price: 7720, academy: 1187, pop: 406586, infant_r: 2.9, elem_r: 3.6, adol_r: 4.4 },
+        { region: '용산구', price: 6250, academy: 180,  pop: 229431, infant_r: 2.3, elem_r: 2.8, adol_r: 3.1 },
+        { region: '송파구', price: 5980, academy: 1155, pop: 667483, infant_r: 2.7, elem_r: 3.4, adol_r: 4.0 },
+        { region: '성동구', price: 5250, academy: 320,  pop: 296854, infant_r: 2.6, elem_r: 3.3, adol_r: 3.5 },
+        { region: '마포구', price: 4700, academy: 520,  pop: 374380, infant_r: 2.4, elem_r: 3.0, adol_r: 3.3 },
+        { region: '광진구', price: 4450, academy: 390,  pop: 341889, infant_r: 2.5, elem_r: 3.1, adol_r: 3.4 },
+        { region: '양천구', price: 4400, academy: 1050, pop: 454243, infant_r: 2.9, elem_r: 3.7, adol_r: 4.3 },
+        { region: '영등포구', price: 4150, academy: 430,  pop: 389250, infant_r: 2.3, elem_r: 2.9, adol_r: 3.1 },
+        { region: '강동구', price: 4100, academy: 680,  pop: 467593, infant_r: 2.8, elem_r: 3.5, adol_r: 3.8 },
+        { region: '동작구', price: 4000, academy: 450,  pop: 389759, infant_r: 2.4, elem_r: 3.1, adol_r: 3.6 },
+        { region: '중구',  price: 3850, academy: 150,  pop: 126603, infant_r: 2.1, elem_r: 2.6, adol_r: 2.8 },
+        { region: '종로구', price: 3700, academy: 230,  pop: 148254, infant_r: 2.0, elem_r: 2.5, adol_r: 2.7 },
+        { region: '서대문구', price: 3500, academy: 370,  pop: 312726, infant_r: 2.3, elem_r: 2.9, adol_r: 3.2 },
+        { region: '동대문구', price: 3350, academy: 350,  pop: 345340, infant_r: 2.4, elem_r: 3.0, adol_r: 3.1 },
+        { region: '성북구', price: 3150, academy: 550,  pop: 432267, infant_r: 2.5, elem_r: 3.1, adol_r: 3.3 },
+        { region: '강서구', price: 3100, academy: 600,  pop: 569025, infant_r: 2.6, elem_r: 3.3, adol_r: 3.5 },
+        { region: '관악구', price: 3000, academy: 380,  pop: 496243, infant_r: 2.1, elem_r: 2.6, adol_r: 2.8 },
+        { region: '은평구', price: 2950, academy: 538,  pop: 477849, infant_r: 2.4, elem_r: 3.0, adol_r: 3.2 },
+        { region: '구로구', price: 2850, academy: 340,  pop: 413516, infant_r: 2.5, elem_r: 3.1, adol_r: 3.2 },
+        { region: '노원구', price: 2800, academy: 739,  pop: 516762, infant_r: 2.6, elem_r: 3.3, adol_r: 3.6 },
+        { region: '중랑구', price: 2650, academy: 300,  pop: 391704, infant_r: 2.4, elem_r: 3.0, adol_r: 3.1 },
+        { region: '강북구', price: 2600, academy: 220,  pop: 298957, infant_r: 2.2, elem_r: 2.7, adol_r: 2.9 },
+        { region: '금천구', price: 2550, academy: 200,  pop: 234710, infant_r: 2.3, elem_r: 2.8, adol_r: 3.0 },
+        { region: '도봉구', price: 2450, academy: 290,  pop: 319143, infant_r: 2.4, elem_r: 3.0, adol_r: 3.2 }
+    ];
 
-RAW.forEach(d=>{d.adol_pop=Math.round(d.pop*d.adol_r/100);d.density=d.adol_pop>0?(d.academy/d.adol_pop*1000):0});
+    // 2. 데이터 가공 로직 (파이썬에서 하던 작업을 JS에서 즉시 처리)
+    const normalize = (arr) => {
+        const min = Math.min(...arr), max = Math.max(...arr);
+        return arr.map(v => (v - min) / (max - min || 1));
+    };
 
-function pearson(xs,ys){const n=xs.length,mx=xs.reduce((a,b)=>a+b,0)/n,my=ys.reduce((a,b)=>a+b,0)/n;let num=0,dx=0,dy=0;for(let i=0;i<n;i++){const x=xs[i]-mx,y=ys[i]-my;num+=x*y;dx+=x*x;dy+=y*y}return num/Math.sqrt(dx*dy)}
-function linReg(xs,ys){const n=xs.length,mx=xs.reduce((a,b)=>a+b,0)/n,my=ys.reduce((a,b)=>a+b,0)/n;let num=0,den=0;for(let i=0;i<n;i++){num+=(xs[i]-mx)*(ys[i]-my);den+=(xs[i]-mx)**2}const slope=num/den,intercept=my-slope*mx;return{slope,intercept,predict:x=>slope*x+intercept}}
-function normalize(arr){const mn=Math.min(...arr),mx=Math.max(...arr);return arr.map(v=>(v-mn)/(mx-mn||1))}
-function fmt(n){return n.toLocaleString('ko-KR')}
+    const data = RAW_DATA.map(d => {
+        const adol_pop = Math.round(d.pop * (d.adol_r / 100));
+        const density = adol_pop > 0 ? (d.academy / adol_pop) * 1000 : 0;
+        return { ...d, adol_pop, density };
+    });
 
-const prices=RAW.map(d=>d.price),infant_rs=RAW.map(d=>d.infant_r),elem_rs=RAW.map(d=>d.elem_r),adol_rs=RAW.map(d=>d.adol_r),academies=RAW.map(d=>d.academy),densities=RAW.map(d=>d.density);
-const corrInfant=pearson(infant_rs,prices),corrElem=pearson(elem_rs,prices),corrAdol=pearson(adol_rs,prices),corrAcademy=pearson(academies,prices),corrDensity=pearson(densities,prices);
+    const norm_adol = normalize(data.map(d => d.adol_r));
+    const norm_density = normalize(data.map(d => d.density));
+    const norm_pop = normalize(data.map(d => d.pop));
 
-document.getElementById('heroCorr').textContent=Math.max(corrAdol,corrAcademy,corrDensity).toFixed(2);
+    data.forEach((d, i) => {
+        d.composite_index = (norm_adol[i] * 0.4) + (norm_density[i] * 0.4) + (norm_pop[i] * 0.2);
+    });
 
-Chart.defaults.font.family="'Noto Sans KR','JetBrains Mono',sans-serif";
-Chart.defaults.font.size=11;
-Chart.defaults.color='#64748b';
+    // 3. 통계 유틸리티 함수
+    const pearson = (xs, ys) => {
+        const n = xs.length, mx = xs.reduce((a,b)=>a+b,0)/n, my = ys.reduce((a,b)=>a+b,0)/n;
+        let num = 0, dx = 0, dy = 0;
+        for(let i=0; i<n; i++) {
+            const x = xs[i]-mx, y = ys[i]-my;
+            num += x*y; dx += x*x; dy += y*y;
+        }
+        return num / Math.sqrt(dx*dy);
+    };
 
-const C={red:'rgba(200,67,43,.8)',redBg:'rgba(200,67,43,.15)',blue:'rgba(37,99,235,.8)',blueBg:'rgba(37,99,235,.15)',teal:'rgba(13,148,136,.8)',tealBg:'rgba(13,148,136,.15)',gold:'rgba(184,134,11,.8)',goldBg:'rgba(184,134,11,.15)',slate:'rgba(100,116,139,.6)'};
+    const linReg = (xs, ys) => {
+        const n = xs.length, mx = xs.reduce((a,b)=>a+b,0)/n, my = ys.reduce((a,b)=>a+b,0)/n;
+        let num = 0, den = 0;
+        for(let i=0; i<n; i++) {
+            num += (xs[i]-mx)*(ys[i]-my);
+            den += (xs[i]-mx)**2;
+        }
+        const slope = num/den;
+        return { slope, intercept: my - slope*mx, predict: x => slope*x + (my - slope*mx) };
+    };
 
-function makeScatter(id,xs,ys,xL,yL,color){
-const reg=linReg(xs,ys),xMn=Math.min(...xs),xMx=Math.max(...xs);
-new Chart(document.getElementById(id),{type:'scatter',data:{datasets:[
-{label:'자치구',data:RAW.map((d,i)=>({x:xs[i],y:ys[i],label:d.region})),backgroundColor:color,pointRadius:5,pointHoverRadius:8},
-{label:'추세선',data:[{x:xMn,y:reg.predict(xMn)},{x:xMx,y:reg.predict(xMx)}],type:'line',borderColor:'rgba(0,0,0,.25)',borderDash:[6,4],borderWidth:1.5,pointRadius:0,fill:false}
-]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const p=c.raw;return p.label+': ('+p.x.toFixed(2)+', '+fmt(p.y)+')'}}}},scales:{x:{title:{display:true,text:xL,font:{weight:'bold'}},grid:{color:'rgba(0,0,0,.04)'}},y:{title:{display:true,text:yL,font:{weight:'bold'}},grid:{color:'rgba(0,0,0,.04)'}}}}});
-}
+    // 4. 차트 렌더링 시작
+    Chart.defaults.color = '#a0a0a0';
+    Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
 
-// CH1: Correlation
-document.getElementById('corrMetrics').innerHTML=[
-{v:corrInfant.toFixed(3),l:'영유아 (0-6세)',s:'보육 중심',c:''},
-{v:corrElem.toFixed(3),l:'초등 (7-12세)',s:'학군 형성기',c:'blue'},
-{v:corrAdol.toFixed(3),l:'입시생 (13-18세)',s:'본격 입시 학군',c:''},
-{v:corrAcademy.toFixed(3),l:'학원 수',s:'사교육 인프라',c:'teal'}
-].map(m=>'<div class="metric-card"><div class="metric-value '+m.c+'">'+m.v+'</div><div class="metric-label">'+m.l+'</div><div class="metric-sub">'+m.s+'</div></div>').join('');
+    const prices = data.map(d => d.price);
+    const corrInfant = pearson(data.map(d => d.infant_r), prices);
+    const corrElem = pearson(data.map(d => d.elem_r), prices);
+    const corrAdol = pearson(data.map(d => d.adol_r), prices);
 
-new Chart(document.getElementById('corrBar'),{type:'bar',data:{labels:['영유아\n(0-6)','초등\n(7-12)','입시생\n(13-18)'],datasets:[{data:[corrInfant,corrElem,corrAdol],backgroundColor:[C.gold,C.blue,C.red],borderRadius:6,barThickness:50}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'r = '+c.raw.toFixed(3)}}},scales:{y:{beginAtZero:true,max:1,title:{display:true,text:'상관계수 (r)',font:{weight:'bold'}},grid:{color:'rgba(0,0,0,.04)'}},x:{grid:{display:false}}}}});
+    // UI 업데이트
+    document.getElementById('val-infant').innerText = corrInfant.toFixed(3);
+    document.getElementById('val-adol').innerText = corrAdol.toFixed(3);
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
 
-makeScatter('scatterAdol',adol_rs,prices,'입시생 비율 (%)','평당 가격 (만원)',C.red);
-makeScatter('scatterInfant',infant_rs,prices,'영유아 비율 (%)','평당 가격 (만원)',C.gold);
-makeScatter('scatterElem',elem_rs,prices,'초등 비율 (%)','평당 가격 (만원)',C.blue);
+    // 차트 1: 상관계수 바 차트
+    new Chart(document.getElementById('corrChart'), {
+        type: 'bar',
+        data: {
+            labels: ['영유아(0-6)', '초등(7-12)', '입시생(13-18)'],
+            datasets: [{
+                data: [corrInfant, corrElem, corrAdol],
+                backgroundColor: ['#4b4b4b', '#4b4b4b', '#3742fa'],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, grid: { color: '#333' } }, x: { grid: { display: false } } }
+        }
+    });
 
-const maxCorr=Math.max(corrInfant,corrElem,corrAdol);
-const maxLabel=maxCorr===corrAdol?'입시생(13-18세)':maxCorr===corrElem?'초등(7-12세)':'영유아(0-6세)';
-document.getElementById('corrInsight').innerHTML='<strong>핵심 발견:</strong> 세 연령대 중 <strong>'+maxLabel+'</strong> 비율이 집값과 가장 높은 상관관계(r='+maxCorr.toFixed(3)+')를 보입니다. 영유아 비율(r='+corrInfant.toFixed(3)+')보다 입시생 비율이 약 <strong>'+((corrAdol-corrInfant)/corrInfant*100).toFixed(0)+'%</strong> 더 강한 설명력을 가집니다. 이는 실거주 수요가 고등학교 학군과 대입 인프라를 따라 이동한다는 가설을 지지합니다. 특히 강남&middot;서초&middot;양천의 삼각 구도가 뚜렷합니다.';
+    // 차트 2: 학원 밀도 바 차트 (Top 10)
+    const densitySorted = [...data].sort((a, b) => b.density - a.density).slice(0, 10);
+    new Chart(document.getElementById('densityChart'), {
+        type: 'bar',
+        data: {
+            labels: densitySorted.map(d => d.region),
+            datasets: [{
+                data: densitySorted.map(d => d.density),
+                backgroundColor: '#2ed573',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { grid: { color: '#333' } }, y: { grid: { display: false } } }
+        }
+    });
 
-// CH2: Academy
-makeScatter('scatterAcademy',academies,prices,'학원 수 (개)','평당 가격 (만원)',C.blue);
+    // 차트 3: 스캐터 플롯 (종합 지수 vs 가격)
+    const xs = data.map(d => d.composite_index);
+    const ys = prices;
+    const reg = linReg(xs, ys);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
 
-const sorted=[...RAW].sort((a,b)=>b.density-a.density).slice(0,15);
-new Chart(document.getElementById('densityBar'),{type:'bar',data:{labels:sorted.map(d=>d.region),datasets:[{data:sorted.map(d=>d.density),backgroundColor:sorted.map(d=>d.price>5000?C.red:d.price>3500?C.blue:C.teal),borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.toFixed(1)+' 개/1,000명'}}},scales:{x:{title:{display:true,text:'학원 수 / 입시생 1,000명',font:{weight:'bold'}},grid:{color:'rgba(0,0,0,.04)'}},y:{grid:{display:false}}}}});
-
-document.getElementById('academyInsight').innerHTML='<strong>학원 인프라 분석:</strong> 학원 절대 수와 집값의 상관계수는 <strong>r='+corrAcademy.toFixed(3)+'</strong>으로, 인구 비율보다 높은 설명력을 보입니다. 강남구('+fmt(2578)+'개)는 2위 서초구('+fmt(1187)+'개)의 2배가 넘는 학원 수로 독보적입니다. <strong>입시생 대비 학원 밀도</strong>를 보면, 양천구&middot;서초구&middot;강남구가 상위권에 포진하여 교육 인프라의 질적 밀집이 가격 프리미엄의 핵심 동력임을 보여줍니다. 용산구는 학원 수(180개)가 적지만 집값이 높은 이유는 직주근접&middot;한강 조망 등 비교육 프리미엄이 작용합니다.';
-
-// CH3: Cluster
-function assignCluster(d){if(d.price>=5500&&d.academy>=1000)return 0;if(d.price>=3500&&d.academy<600)return 1;if(d.price<3500&&d.academy>=500)return 2;return 3}
-const cColors=[C.red,C.gold,C.teal,C.slate],cBgs=[C.redBg,C.goldBg,C.tealBg,'rgba(100,116,139,.08)'],cNames=['프리미엄 학군','비교육 프리미엄','교육 특화 실속','잠재 성장'];
-RAW.forEach(d=>d.cluster=assignCluster(d));
-
-new Chart(document.getElementById('clusterChart'),{type:'bubble',data:{datasets:[0,1,2,3].map(ci=>({label:cNames[ci],data:RAW.filter(d=>d.cluster===ci).map(d=>({x:d.academy,y:d.price,r:d.adol_r*3,label:d.region})),backgroundColor:cColors[ci],borderColor:cColors[ci].replace('0.8','1'),borderWidth:1}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,pointStyle:'circle',padding:16}},tooltip:{callbacks:{label:c=>c.raw.label+': 학원 '+fmt(c.raw.x)+'개, '+fmt(c.raw.y)+'만원/평'}}},scales:{x:{title:{display:true,text:'학원 수',font:{weight:'bold'}},grid:{color:'rgba(0,0,0,.04)'}},y:{title:{display:true,text:'평당 가격 (만원)',font:{weight:'bold'}},grid:{color:'rgba(0,0,0,.04)'}}}}});
-
-const cInfo=[
-{name:'프리미엄 학군',desc:'높은 집값 + 풍부한 학원 인프라. 교육 수요가 가격을 견인하는 대표 지역.',icon:'&#127942;'},
-{name:'비교육 프리미엄',desc:'학원 수 대비 집값이 높음. 직주근접, 한강 조망, 개발 호재 등이 가격 지탱.',icon:'&#127751;'},
-{name:'교육 특화 실속',desc:'집값 대비 학원 밀도가 높은 가성비 교육 지역. 실거주 교육 목적 수요 강세.',icon:'&#128218;'},
-{name:'잠재 성장',desc:'교육 인프라와 가격 모두 낮지만, 개발이나 교통 호재 시 상승 잠재력 보유.',icon:'&#127793;'}
-];
-document.getElementById('clusterCards').innerHTML=cInfo.map((info,i)=>{
-const members=RAW.filter(d=>d.cluster===i).map(d=>d.region);
-return '<div class="cluster-card" style="background:'+cBgs[i]+'"><h4><span class="cluster-dot" style="background:'+cColors[i]+'"></span>'+info.icon+' '+info.name+'</h4><p style="font-size:.85rem;color:var(--slate);margin-bottom:.5rem">'+info.desc+'</p><ul>'+members.map(m=>'<li>'+m+'</li>').join('')+'</ul></div>';
-}).join('');
-
-// CH4: Composite Index
-const normAdol=normalize(adol_rs),normDensity=normalize(densities),normPop=normalize(RAW.map(d=>d.pop));
-RAW.forEach((d,i)=>d.composite=normAdol[i]*0.4+normDensity[i]*0.35+normPop[i]*0.25);
-const composites=RAW.map(d=>d.composite),corrComp=pearson(composites,prices);
-
-new Chart(document.getElementById('compositeChart'),{type:'scatter',data:{datasets:[
-{label:'자치구',data:RAW.map(d=>({x:d.composite,y:d.price,label:d.region})),backgroundColor:RAW.map(d=>cColors[d.cluster]),pointRadius:7,pointHoverRadius:10},
-(()=>{const reg=linReg(composites,prices),mn=Math.min(...composites),mx=Math.max(...composites);return{label:'추세선',data:[{x:mn,y:reg.predict(mn)},{x:mx,y:reg.predict(mx)}],type:'line',borderColor:'rgba(0,0,0,.2)',borderDash:[6,4],borderWidth:1.5,pointRadius:0,fill:false}})()
-]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.label+': 지수 '+c.raw.x.toFixed(2)+', '+fmt(c.raw.y)+'만원'}}},scales:{x:{title:{display:true,text:'교육 프리미엄 종합지수',font:{weight:'bold'}},grid:{color:'rgba(0,0,0,.04)'}},y:{title:{display:true,text:'평당 가격 (만원)',font:{weight:'bold'}},grid:{color:'rgba(0,0,0,.04)'}}}}});
-
-const r2=(corrComp**2*100).toFixed(1);
-RAW.sort((a,b)=>b.composite-a.composite);
-document.getElementById('compositeMetrics').innerHTML=[
-{v:corrComp.toFixed(3),l:'종합지수 vs 집값',s:'복합 상관계수',c:''},
-{v:r2+'%',l:'설명력 (R&sup2;)',s:'가격 변동의 설명 비율',c:'blue'},
-{v:RAW[0].region,l:'지수 1위',s:'교육 프리미엄 최고',c:'teal'}
-].map(m=>'<div class="metric-card"><div class="metric-value '+m.c+'">'+m.v+'</div><div class="metric-label">'+m.l+'</div><div class="metric-sub">'+m.s+'</div></div>').join('');
-
-document.getElementById('compositeInsight').innerHTML='<strong>종합 결론:</strong> 입시생 비율&middot;학원 밀도&middot;인구 규모를 결합한 교육 프리미엄 종합지수는 집값과 <strong>r='+corrComp.toFixed(3)+'</strong>의 상관관계(R&sup2;='+r2+'%)를 보입니다. 단일 변수(학원 수 r='+corrAcademy.toFixed(3)+', 입시생 비율 r='+corrAdol.toFixed(3)+')보다 강력한 설명력으로, 서울 집값의 약 <strong>'+r2+'%</strong>가 교육 관련 요인만으로 설명될 수 있음을 시사합니다. 나머지 '+(100-parseFloat(r2)).toFixed(1)+'%는 교통, 한강 조망, 재건축 기대감 등 비교육 프리미엄입니다.';
-
-// CH5: Data Table
-RAW.sort((a,b)=>b.price-a.price);
-const maxPrice=Math.max(...RAW.map(d=>d.price));
-document.querySelector('#dataTable thead').innerHTML='<tr><th>#</th><th>자치구</th><th>평당 가격</th><th>학원 수</th><th>입시생 비율</th><th>학원 밀도</th><th>종합지수</th><th>클러스터</th></tr>';
-document.querySelector('#dataTable tbody').innerHTML=RAW.map((d,i)=>{
-const rc=i<1?'rank-1':i<2?'rank-2':i<3?'rank-3':'rank-n';
-const pw=(d.price/maxPrice*100).toFixed(0);
-return '<tr><td><span class="rank-badge '+rc+'">'+(i+1)+'</span></td><td style="font-weight:600">'+d.region+'</td><td><span class="mono">'+fmt(d.price)+'</span> 만원<span class="bar-inline" style="width:'+pw+'%"></span></td><td><span class="mono">'+fmt(d.academy)+'</span> 개</td><td><span class="mono">'+d.adol_r.toFixed(1)+'%</span></td><td><span class="mono">'+d.density.toFixed(1)+'</span></td><td><span class="mono">'+d.composite.toFixed(3)+'</span></td><td><span class="cluster-dot" style="background:'+cColors[d.cluster]+'"></span>'+cNames[d.cluster]+'</td></tr>';
-}).join('');
-
-// Scroll animations
-const nav=document.getElementById('nav');
-const secs=document.querySelectorAll('section');
-const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:0.08});
-secs.forEach(s=>obs.observe(s));
-window.addEventListener('scroll',()=>nav.classList.toggle('show',window.scrollY>window.innerHeight*0.6));
+    new Chart(document.getElementById('scatterChart'), {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {
+                    label: '자치구',
+                    data: data.map(d => ({ x: d.composite_index, y: d.price, label: d.region })),
+                    backgroundColor: '#ff4757',
+                    pointRadius: 6
+                },
+                {
+                    label: '추세선',
+                    data: [{ x: minX, y: reg.predict(minX) }, { x: maxX, y: reg.predict(maxX) }],
+                    type: 'line',
+                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                    borderDash: [5, 5],
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `${ctx.raw.label}: ${ctx.raw.y.toLocaleString()}만원` } }
+            },
+            scales: {
+                x: { title: { display: true, text: '교육 프리미엄 지수', color: '#a0a0a0' }, grid: { color: '#333' } },
+                y: { title: { display: true, text: '평당 가격 (만원)', color: '#a0a0a0' }, grid: { color: '#333' } }
+            }
+        }
+    });
 </script>
-</body>
-</html>
