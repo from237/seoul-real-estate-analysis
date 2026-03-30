@@ -1,5 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>서울 부동산 딥다이브: 모바일 리포트</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+    :root {
+        --bg: #121212; --surface: #1e1e1e; --text: #f0f0f0; --text-muted: #a0a0a0;
+        --accent: #ff4757; --accent-dim: rgba(255, 71, 87, 0.15);
+        --blue: #3742fa; --teal: #2ed573;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Noto Sans KR', sans-serif;
+        background-color: #000;
+        color: var(--text);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    #app-container {
+        max-width: 480px;
+        margin: 0 auto;
+        background-color: var(--bg);
+        min-height: 100vh;
+        position: relative;
+        box-shadow: 0 0 40px rgba(0,0,0,0.8);
+        overflow-x: hidden;
+    }
+
+    header {
+        padding: 4rem 1.5rem 3rem;
+        background: linear-gradient(to bottom, #2f3542, var(--bg));
+    }
+    .kicker { color: var(--accent); font-size: 0.8rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 0.5rem; display: block; }
+    h1 { font-size: 2.2rem; line-height: 1.2; font-weight: 900; margin-bottom: 1rem; word-break: keep-all;}
+    .lead { color: var(--text-muted); font-size: 1rem; line-height: 1.6; word-break: keep-all; }
+
+    main { padding: 0 1.5rem 4rem; }
+    section { margin-top: 4rem; }
+    h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px;}
+    h2::before { content: ""; display: block; width: 4px; height: 1.2rem; background: var(--accent); }
+
+    p.narrative { font-size: 1rem; color: #dcdde1; margin-bottom: 1.5rem; word-break: keep-all; }
+    .highlight { background: var(--accent-dim); color: var(--accent); padding: 0 4px; font-weight: 700; }
+
+    .chart-wrapper {
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 1.2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .chart-title { font-size: 0.9rem; font-weight: 700; text-align: center; margin-bottom: 1rem; color: var(--text); }
+    .canvas-container { position: relative; height: 260px; width: 100%; }
+
+    .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;}
+    .data-card { background: var(--surface); padding: 1rem; border-radius: 12px; text-align: center; }
+    .data-card .value { font-size: 1.5rem; font-weight: 900; color: var(--accent); }
+    .data-card .label { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+
+    .insight-box {
+        border-left: 3px solid var(--teal);
+        background: rgba(46, 213, 115, 0.05);
+        padding: 1.2rem;
+        border-radius: 0 12px 12px 0;
+        margin: 2rem 0;
+        font-size: 0.9rem;
+        color: #ced6e0;
+        word-break: keep-all;
+    }
+
+    #loader { text-align: center; padding: 5rem 0; color: var(--text-muted); font-weight: 700;}
+</style>
+</head>
+<body>
+
+<div id="app-container">
+    <header>
+        <span class="kicker">DATA DEEP DIVE</span>
+        <h1>입시가 곧<br>서울의 집값이다</h1>
+        <p class="lead">서울 25개 자치구의 인구 구조, 교육 인프라, 그리고 아파트 실거래가를 교차 분석하여 부동산 시장의 숨겨진 역학을 모바일 뷰로 해부합니다.</p>
+    </header>
+
+    <div id="loader">데이터를 분석 중입니다...</div>
+
+    <main id="content" style="display: none;">
+        <section>
+            <h2>어떤 아이들이 집값을 견인하는가?</h2>
+            <p class="narrative">보통 '학군'이라고 하면 초등학교(초품아)를 떠올리기 쉽습니다. 하지만 데이터를 연령대별로 분리해 분석해 본 결과는 사뭇 달랐습니다. 보육 중심의 <span class="highlight">영유아 비율보다 입시생(중고등학생) 비율</span>이 집값과 훨씬 더 강력한 상관관계를 보였습니다.</p>
+
+            <div class="data-grid">
+                <div class="data-card">
+                    <div class="value" id="val-infant">0.00</div>
+                    <div class="label">영유아(0~6세) 상관계수</div>
+                </div>
+                <div class="data-card">
+                    <div class="value" id="val-adol" style="color: var(--blue);">0.00</div>
+                    <div class="label">입시생(13~18세) 상관계수</div>
+                </div>
+            </div>
+
+            <div class="chart-wrapper">
+                <div class="chart-title">연령대별 집값 상관계수 비교</div>
+                <div class="canvas-container"><canvas id="corrChart"></canvas></div>
+            </div>
+
+            <div class="insight-box">
+                <strong>💡 분석 인사이트</strong><br>
+                실거주 수요는 아이가 자라면서 교육 인프라(학원가, 명문고)가 밀집된 곳으로 이동합니다. 즉, 10대 후반 인구가 많은 곳이 곧 부동산의 최상급지임을 시사합니다.
+            </div>
+        </section>
+
+        <section>
+            <h2>인프라의 척도: 학원 밀도</h2>
+            <p class="narrative">단순히 학원 갯수가 많은 것을 넘어, 해당 지역의 입시생 수 대비 <span class="highlight">질적인 학원 밀도</span>를 측정했습니다. 대치동, 목동, 중계동 등 이른바 3대 학군지가 데이터로 명확히 증명됩니다.</p>
+
+            <div class="chart-wrapper">
+                <div class="chart-title">입시생 1,000명당 사설학원 수 (Top 10)</div>
+                <div class="canvas-container"><canvas id="densityChart"></canvas></div>
+            </div>
+
+            <p class="narrative" style="font-size: 0.9rem; color: var(--text-muted);">
+                강남구는 절대적인 학원 수(2,500여 개)에서도 압도적이지만, 학생 수 대비 학원 인프라도 최상위권입니다. 양천구(목동)는 입시생 밀집도와 학원 밀도가 완벽히 비례하는 전형적인 교육 특구입니다.
+            </p>
+        </section>
+
+        <section>
+            <h2>교육 프리미엄 종합 지수</h2>
+            <p class="narrative">입시생 비율(40%), 학원 밀도(40%), 지역 인구 규모(20%)를 결합한 종합 지수를 산출하여 실제 집값과의 관계를 매핑했습니다.</p>
+
+            <div class="chart-wrapper">
+                <div class="chart-title">프리미엄 지수 vs 평당 가격(만원)</div>
+                <div class="canvas-container" style="height: 300px;"><canvas id="scatterChart"></canvas></div>
+            </div>
+
+            <div class="insight-box" style="border-color: var(--accent);">
+                <strong>🚨 예외 변수의 발견</strong><br>
+                추세선 위로 크게 벗어난 지역(용산구, 성동구 등)은 교육 외의 프리미엄(직주근접, 한강 조망, 대규모 개발 호재)이 집값을 강하게 지탱하고 있는 지역입니다. 반대로 추세선 아래에 있는 지역은 뛰어난 교육 인프라 대비 집값이 저평가되어 있거나 구축 위주의 한계가 반영된 곳입니다.
+            </div>
+        </section>
+    </main>
+</div>
+
 <script>
-    // 1. 하드코딩된 원본 데이터 (CSV 로드 대체)
+    // 1. 하드코딩된 원본 데이터 (추정치)
     const RAW_DATA = [
         { region: '강남구', price: 8150, academy: 2578, pop: 521806, infant_r: 2.8, elem_r: 3.5, adol_r: 4.2 },
         { region: '서초구', price: 7720, academy: 1187, pop: 406586, infant_r: 2.9, elem_r: 3.6, adol_r: 4.4 },
@@ -28,27 +177,12 @@
         { region: '도봉구', price: 2450, academy: 290,  pop: 319143, infant_r: 2.4, elem_r: 3.0, adol_r: 3.2 }
     ];
 
-    // 2. 데이터 가공 로직 (파이썬에서 하던 작업을 JS에서 즉시 처리)
+    // 2. 수학 및 통계 유틸리티 함수
     const normalize = (arr) => {
         const min = Math.min(...arr), max = Math.max(...arr);
         return arr.map(v => (v - min) / (max - min || 1));
     };
 
-    const data = RAW_DATA.map(d => {
-        const adol_pop = Math.round(d.pop * (d.adol_r / 100));
-        const density = adol_pop > 0 ? (d.academy / adol_pop) * 1000 : 0;
-        return { ...d, adol_pop, density };
-    });
-
-    const norm_adol = normalize(data.map(d => d.adol_r));
-    const norm_density = normalize(data.map(d => d.density));
-    const norm_pop = normalize(data.map(d => d.pop));
-
-    data.forEach((d, i) => {
-        d.composite_index = (norm_adol[i] * 0.4) + (norm_density[i] * 0.4) + (norm_pop[i] * 0.2);
-    });
-
-    // 3. 통계 유틸리티 함수
     const pearson = (xs, ys) => {
         const n = xs.length, mx = xs.reduce((a,b)=>a+b,0)/n, my = ys.reduce((a,b)=>a+b,0)/n;
         let num = 0, dx = 0, dy = 0;
@@ -70,95 +204,138 @@
         return { slope, intercept: my - slope*mx, predict: x => slope*x + (my - slope*mx) };
     };
 
-    // 4. 차트 렌더링 시작
-    Chart.defaults.color = '#a0a0a0';
-    Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
+    // 3. 페이지 로드 완료 시 실행되는 메인 로직
+    window.onload = function() {
 
-    const prices = data.map(d => d.price);
-    const corrInfant = pearson(data.map(d => d.infant_r), prices);
-    const corrElem = pearson(data.map(d => d.elem_r), prices);
-    const corrAdol = pearson(data.map(d => d.adol_r), prices);
+        // 데이터 가공 (밀도, 종합지수 산출)
+        const data = RAW_DATA.map(d => {
+            const adol_pop = Math.round(d.pop * (d.adol_r / 100));
+            const density = adol_pop > 0 ? (d.academy / adol_pop) * 1000 : 0;
+            return { ...d, adol_pop, density };
+        });
 
-    // UI 업데이트
-    document.getElementById('val-infant').innerText = corrInfant.toFixed(3);
-    document.getElementById('val-adol').innerText = corrAdol.toFixed(3);
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('content').style.display = 'block';
+        const norm_adol = normalize(data.map(d => d.adol_r));
+        const norm_density = normalize(data.map(d => d.density));
+        const norm_pop = normalize(data.map(d => d.pop));
 
-    // 차트 1: 상관계수 바 차트
-    new Chart(document.getElementById('corrChart'), {
-        type: 'bar',
-        data: {
-            labels: ['영유아(0-6)', '초등(7-12)', '입시생(13-18)'],
-            datasets: [{
-                data: [corrInfant, corrElem, corrAdol],
-                backgroundColor: ['#4b4b4b', '#4b4b4b', '#3742fa'],
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, grid: { color: '#333' } }, x: { grid: { display: false } } }
-        }
-    });
+        data.forEach((d, i) => {
+            d.composite_index = (norm_adol[i] * 0.4) + (norm_density[i] * 0.4) + (norm_pop[i] * 0.2);
+        });
 
-    // 차트 2: 학원 밀도 바 차트 (Top 10)
-    const densitySorted = [...data].sort((a, b) => b.density - a.density).slice(0, 10);
-    new Chart(document.getElementById('densityChart'), {
-        type: 'bar',
-        data: {
-            labels: densitySorted.map(d => d.region),
-            datasets: [{
-                data: densitySorted.map(d => d.density),
-                backgroundColor: '#2ed573',
-                borderRadius: 4
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { x: { grid: { color: '#333' } }, y: { grid: { display: false } } }
-        }
-    });
+        const prices = data.map(d => d.price);
+        const corrInfant = pearson(data.map(d => d.infant_r), prices);
+        const corrElem = pearson(data.map(d => d.elem_r), prices);
+        const corrAdol = pearson(data.map(d => d.adol_r), prices);
 
-    // 차트 3: 스캐터 플롯 (종합 지수 vs 가격)
-    const xs = data.map(d => d.composite_index);
-    const ys = prices;
-    const reg = linReg(xs, ys);
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
+        // HTML 텍스트 업데이트
+        document.getElementById('val-infant').innerText = corrInfant.toFixed(3);
+        document.getElementById('val-adol').innerText = corrAdol.toFixed(3);
 
-    new Chart(document.getElementById('scatterChart'), {
-        type: 'scatter',
-        data: {
-            datasets: [
-                {
-                    label: '자치구',
-                    data: data.map(d => ({ x: d.composite_index, y: d.price, label: d.region })),
-                    backgroundColor: '#ff4757',
-                    pointRadius: 6
-                },
-                {
-                    label: '추세선',
-                    data: [{ x: minX, y: reg.predict(minX) }, { x: maxX, y: reg.predict(maxX) }],
-                    type: 'line',
-                    borderColor: 'rgba(255, 255, 255, 0.3)',
-                    borderDash: [5, 5],
-                    pointRadius: 0
-                }
-            ]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: ctx => `${ctx.raw.label}: ${ctx.raw.y.toLocaleString()}만원` } }
+        // 로딩 화면 숨기고 메인 콘텐츠 표시
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+
+        // Chart.js 기본 디자인 설정
+        Chart.defaults.color = '#a0a0a0';
+        Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
+
+        // [차트 1] 연령대별 상관계수 바 차트
+        new Chart(document.getElementById('corrChart'), {
+            type: 'bar',
+            data: {
+                labels: ['영유아(0-6)', '초등(7-12)', '입시생(13-18)'],
+                datasets: [{
+                    data: [corrInfant, corrElem, corrAdol],
+                    backgroundColor: ['#4b4b4b', '#4b4b4b', '#3742fa'],
+                    borderRadius: 6
+                }]
             },
-            scales: {
-                x: { title: { display: true, text: '교육 프리미엄 지수', color: '#a0a0a0' }, grid: { color: '#333' } },
-                y: { title: { display: true, text: '평당 가격 (만원)', color: '#a0a0a0' }, grid: { color: '#333' } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#333' } },
+                    x: { grid: { display: false } }
+                }
             }
-        }
-    });
+        });
+
+        // [차트 2] 학원 밀도 바 차트 (Top 10)
+        const densitySorted = [...data].sort((a, b) => b.density - a.density).slice(0, 10);
+        new Chart(document.getElementById('densityChart'), {
+            type: 'bar',
+            data: {
+                labels: densitySorted.map(d => d.region),
+                datasets: [{
+                    data: densitySorted.map(d => d.density),
+                    backgroundColor: '#2ed573',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: '#333' } },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+
+        // [차트 3] 종합 지수 스캐터 플롯
+        const xs = data.map(d => d.composite_index);
+        const ys = prices;
+        const reg = linReg(xs, ys);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+
+        new Chart(document.getElementById('scatterChart'), {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: '자치구',
+                        data: data.map(d => ({ x: d.composite_index, y: d.price, label: d.region })),
+                        backgroundColor: '#ff4757',
+                        pointRadius: 6
+                    },
+                    {
+                        label: '추세선',
+                        data: [{ x: minX, y: reg.predict(minX) }, { x: maxX, y: reg.predict(maxX) }],
+                        type: 'line',
+                        borderColor: 'rgba(255, 255, 255, 0.3)',
+                        borderDash: [5, 5],
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.raw.label}: ${ctx.raw.y.toLocaleString()}만원`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: '교육 프리미엄 지수', color: '#a0a0a0' },
+                        grid: { color: '#333' }
+                    },
+                    y: {
+                        title: { display: true, text: '평당 가격 (만원)', color: '#a0a0a0' },
+                        grid: { color: '#333' }
+                    }
+                }
+            }
+        });
+    };
 </script>
+</body>
+</html>
